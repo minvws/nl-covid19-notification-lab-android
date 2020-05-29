@@ -1,0 +1,6 @@
+include ':barcode-scanner'
+include ':toolkit-app'
+include ':toolkit'
+include ':contact-tracing-api'
+include ':play-services-nearby-eap'
+include ':app'

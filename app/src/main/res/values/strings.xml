@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Lab</string>
+    <string name="generic_error_message">Generic Error Message</string>
+    <string name="label_enable_exposure_notification">Exposure Notification</string>
+    <string name="button_enable_exposure_notification">Enable</string>
+    <string name="button_disable_exposure_notification">Disable</string>
+    <string name="nav_status">Status</string>
+    <string name="nav_keys">Keys</string>
+    <string name="export_keys">Export TEKs</string>
+    <string name="import_keys">Import diagnosis keys</string>
+    <string name="export_keys_status">Posted %1$d keys</string>
+    <string name="share_tek_generic_error">Unexpected error while exporting keys</string>
+    <string name="last_results_header">Last test results</string>
+    <string name="attenuations">Attenuation: %1$s</string>
+    <string name="durations">Duration: %1$s</string>
+    <string name="transmissionRisk">Transmission risk: %1$s</string>
+    <string name="riskScore">Transmission risk score: %1$s</string>
+    <string name="show_tek_qr">Share TEK</string>
+    <string name="share_tek_no_key_error">No key available, please try again</string>
+    <string name="keys_scan_barcode">Scan TEK barcode</string>
+</resources>

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Toolkit</string>
+    <string name="advertising">Advertising</string>
+    <string name="advertising_message">Advertising RPIs</string>
+    <string name="action_stop_advertising">Stop</string>
+    <string name="advertising_notification_channel">Advertiser status</string>
+    <string name="status_current_tek">TEK: %1$s (%2$d)</string>
+    <string name="status_current_rpi">RPI: %1$s (%2$d)</string>
+    <string name="advertising_status_error">Error starting advertisement</string>
+    <string name="scanned_rpi_signal">rssi: %1$ddBm tx: %2$ddBm</string>
+    <string name="header_scan_results">Scan results</string>
+    <string name="header_advertiser">Advertisement</string>
+</resources>
