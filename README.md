@@ -18,4 +18,4 @@ authorities. Other devices trying to access the API using the code in this repos
 to do so.
 
 ##  Impression of experiment
-![Performing an experiment on a field using two phones](docs/impression.png)
+![Performing an experiment on a field using two phones](docs/impression.jpg)
