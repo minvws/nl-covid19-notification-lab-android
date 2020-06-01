@@ -39,6 +39,7 @@ import java.io.IOException
 import java.security.SecureRandom
 
 private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
+private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
 
 class NotificationsRepository(
     private val context: Context,
@@ -140,7 +141,7 @@ class NotificationsRepository(
                 exposureNotificationClient.provideDiagnosisKeys(
                     listOf(file),
                     ExposureConfiguration.ExposureConfigurationBuilder()
-                        .setAttenuationScores(*EQUAL_WEIGHTS)
+                        .setAttenuationScores(*SEQUENTIAL_WEIGHTS)
                         .setAttenuationWeight(1)
                         .setDaysSinceLastExposureScores(*EQUAL_WEIGHTS)
                         .setDaysSinceLastExposureWeight(1)
