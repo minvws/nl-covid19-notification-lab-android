@@ -139,7 +139,7 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
             )
             .put(
                 "rollingPeriod",
-                latestKey.rollingPeriod
+                NotificationsRepository.DEFAULT_ROLLING_PERIOD
             )
             .put(
                 "transmissionRiskLevel",

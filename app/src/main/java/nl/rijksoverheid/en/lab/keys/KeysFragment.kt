@@ -15,6 +15,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.observe
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import nl.rijksoverheid.en.lab.BaseFragment
+import nl.rijksoverheid.en.lab.NotificationsRepository
 import nl.rijksoverheid.en.lab.R
 import nl.rijksoverheid.en.lab.barcodescanner.BarcodeScanActivity
 import nl.rijksoverheid.en.lab.databinding.FragmentKeysBinding
@@ -58,7 +59,7 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
             val tek = TemporaryExposureKey.TemporaryExposureKeyBuilder().apply {
                 setKeyData(Base64.decode(json.getString("keyData"), 0))
                 setRollingStartIntervalNumber(json.getString("rollingStartNumber").toInt())
-                setRollingPeriod(json.getString("rollingPeriod").toInt())
+                setRollingPeriod(NotificationsRepository.DEFAULT_ROLLING_PERIOD)
                 setTransmissionRiskLevel(1)
             }.build()
             viewModel.importKey(tek)
