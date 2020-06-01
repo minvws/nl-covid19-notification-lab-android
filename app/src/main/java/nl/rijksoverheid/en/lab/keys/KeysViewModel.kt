@@ -20,6 +20,7 @@ class KeysViewModel(private val repository: NotificationsRepository) : ViewModel
         repository.getExposureInformation().asLiveData(context = viewModelScope.coroutineContext)
 
     fun importKey(tek: TemporaryExposureKey) {
+        repository.clearExposureInformation()
         viewModelScope.launch {
             repository.importTemporaryExposureKey(tek)
         }

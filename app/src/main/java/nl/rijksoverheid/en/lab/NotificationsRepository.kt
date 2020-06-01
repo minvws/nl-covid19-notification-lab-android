@@ -46,6 +46,10 @@ class NotificationsRepository(
     private val exposureNotificationClient: ExposureNotificationClient
 ) {
 
+    companion object {
+        const val DEFAULT_ROLLING_PERIOD = 144
+    }
+
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     private val exposuresAdapter = moshi.adapter<List<ExposureInfo>>(
         Types.newParameterizedType(
@@ -66,6 +70,12 @@ class NotificationsRepository(
 
     suspend fun getStatus(): StatusResult {
         return exposureNotificationClient.getStatus()
+    }
+
+    fun clearExposureInformation() {
+        measurements.edit {
+            putString("result", "[]")
+        }
     }
 
     suspend fun storeExposureInformation(token: String) {
