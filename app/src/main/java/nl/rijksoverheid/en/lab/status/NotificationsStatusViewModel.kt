@@ -28,11 +28,16 @@ import nl.rijksoverheid.en.lab.lifecyle.Event
 import org.json.JSONObject
 import timber.log.Timber
 
-class NotificationsStatusViewModel(private val repository: NotificationsRepository) : ViewModel() {
+class NotificationsStatusViewModel(
+    private val repository: NotificationsRepository,
+    val deviceId: String
+) : ViewModel() {
 
     val notificationState: LiveData<NotificationsState> = MutableLiveData()
     val notificationsResult: LiveData<Event<NotificationsStatusResult>> = MutableLiveData()
     val shareTekResult: LiveData<Event<ShareTekResult>> = MutableLiveData()
+
+    val testId = MutableLiveData("")
 
     init {
         viewModelScope.launch {
@@ -145,6 +150,9 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
                 "transmissionRiskLevel",
                 latestKey.transmissionRiskLevel
             )
+            .put("testId", testId.value)
+            .put("deviceId", deviceId)
+
         val bitmap = encodeAsQRCode(size, json.toString())
         bitmap?.let {
             updateResult(

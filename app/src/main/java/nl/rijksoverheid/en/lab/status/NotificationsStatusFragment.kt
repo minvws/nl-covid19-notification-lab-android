@@ -6,13 +6,17 @@
  */
 package nl.rijksoverheid.en.lab.status
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.fragment.app.viewModels
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.observe
 import nl.rijksoverheid.en.lab.BaseFragment
 import nl.rijksoverheid.en.lab.R
@@ -25,9 +29,10 @@ private const val RC_REQUEST_SHARE_KEYS = 2
 
 class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
 
-    private val viewModel: NotificationsStatusViewModel by viewModels()
+    private val viewModel: NotificationsStatusViewModel by activityViewModels()
     private lateinit var binding: FragmentStatusBinding
 
+    @SuppressLint("InlinedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentStatusBinding.bind(view)
@@ -37,7 +42,7 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
                 NotificationsStatusViewModel.NotificationsState.Enabled -> {
                     Timber.d("Enabled")
                     binding.enableExposureNotification.isChecked = true
-                    binding.shareTek.isEnabled = true
+                    binding.shareTek.isEnabled = !viewModel.testId.value.isNullOrBlank()
                 }
                 NotificationsStatusViewModel.NotificationsState.Disabled -> {
                     Timber.d("Disabled")
@@ -108,6 +113,11 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
             }
         })
 
+        viewModel.testId.observe(viewLifecycleOwner) {
+            binding.tekQrCode.setImageBitmap(null)
+            binding.shareTek.isEnabled = !it.isBlank() && viewModel.notificationState.value == NotificationsStatusViewModel.NotificationsState.Enabled
+        }
+
         binding.enableExposureNotification.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) viewModel.requestEnableNotifications() else viewModel.requestDisableNotifications()
         }
@@ -115,6 +125,27 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
         binding.shareTek.setOnClickListener {
             shareTek()
         }
+
+        binding.deviceName.text = viewModel.deviceId
+
+        binding.testId.setText(viewModel.testId.value)
+
+        binding.testId.addTextChangedListener {
+            viewModel.testId.value = it.toString().trim()
+        }
+
+        binding.testId.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                shareTek()
+                closeKeyboard()
+            }
+            true
+        }
+    }
+
+    private fun closeKeyboard() {
+        val im = requireContext().getSystemService(InputMethodManager::class.java)!!
+        im.hideSoftInputFromWindow(requireView().windowToken, 0)
     }
 
     private fun shareTek() {
