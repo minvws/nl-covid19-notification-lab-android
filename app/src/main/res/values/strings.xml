@@ -19,4 +19,9 @@
     <string name="share_tek_no_key_error">No key available, please try again</string>
     <string name="keys_scan_barcode">Scan TEK barcode</string>
     <string name="test_id_hint">Test identifier</string>
+    <string name="keys_test_id">Test id: %1$s</string>
+    <string name="keys_device_id">Device name: %1$s</string>
+    <string name="keys_share_results">Save results</string>
+    <string name="share_results">Test id: %1$s\nDevice name: %7$s\nSource device name: %2$s\nAttenuations: %3$s\nDurations: %4$s\nTotal risk scores: %5$s\nTransmission risk scores: %6$s</string>
+    <string name="share_results_title">Test results %2$s (%1$s)</string>
 </resources>

@@ -16,11 +16,12 @@ import nl.rijksoverheid.en.lab.NotificationsRepository
 
 class KeysViewModel(private val repository: NotificationsRepository) : ViewModel() {
 
-    val lastResults: LiveData<List<NotificationsRepository.ExposureInfo>> =
-        repository.getExposureInformation().asLiveData(context = viewModelScope.coroutineContext)
+    val lastResults: LiveData<NotificationsRepository.TestResults> =
+        repository.getTestResults().asLiveData(context = viewModelScope.coroutineContext)
 
-    fun importKey(tek: TemporaryExposureKey) {
+    fun importKey(tek: TemporaryExposureKey, sourceDeviceId: String, testId: String) {
         repository.clearExposureInformation()
+        repository.setSourceAndTestId(sourceDeviceId, testId)
         viewModelScope.launch {
             repository.importTemporaryExposureKey(tek)
         }
