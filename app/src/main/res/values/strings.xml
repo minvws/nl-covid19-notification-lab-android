@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Lab</string>
     <string name="generic_error_message">Generic Error Message</string>
-    <string name="label_enable_exposure_notification">Exposure Notification</string>
+    <string name="label_enable_exposure_notification">Exposure Notification API</string>
     <string name="button_enable_exposure_notification">Enable</string>
     <string name="button_disable_exposure_notification">Disable</string>
     <string name="nav_status">Status</string>
@@ -18,4 +18,5 @@
     <string name="show_tek_qr">Share TEK</string>
     <string name="share_tek_no_key_error">No key available, please try again</string>
     <string name="keys_scan_barcode">Scan TEK barcode</string>
+    <string name="test_id_hint">Test identifier</string>
 </resources>

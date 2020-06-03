@@ -7,6 +7,7 @@
 package nl.rijksoverheid.en.lab
 
 import android.content.Context
+import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.nearby.Nearby
@@ -14,7 +15,7 @@ import com.google.android.gms.nearby.exposurenotification.ExposureNotificationCl
 import nl.rijksoverheid.en.lab.keys.KeysViewModel
 import nl.rijksoverheid.en.lab.status.NotificationsStatusViewModel
 
-class LabViewModelFactory(context: Context) : ViewModelProvider.Factory {
+class LabViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     private val repository: NotificationsRepository by lazy {
         NotificationsRepository(
             context,
@@ -26,7 +27,9 @@ class LabViewModelFactory(context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         return when (modelClass) {
             NotificationsStatusViewModel::class.java -> NotificationsStatusViewModel(
-                repository
+                repository,
+                Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+                    ?: ""
             ) as T
             KeysViewModel::class.java -> KeysViewModel(
                 repository
