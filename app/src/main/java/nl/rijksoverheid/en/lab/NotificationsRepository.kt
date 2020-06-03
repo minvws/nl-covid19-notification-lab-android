@@ -40,6 +40,8 @@ import java.security.SecureRandom
 
 private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
 private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
+private const val KEY_SOURCE_DEVICE = "source_device"
+private const val KEY_TEST_ID = "test_id"
 
 class NotificationsRepository(
     private val context: Context,
@@ -96,17 +98,22 @@ class NotificationsRepository(
         }
     }
 
-    private fun getExposuresFromPreferences(prefs: SharedPreferences): List<ExposureInfo> {
+    private fun getTestResultsFromPreferences(prefs: SharedPreferences): TestResults {
         val json = prefs.getString("result", "[]") ?: "[]"
-        return exposuresAdapter.fromJson(json)!!
+        val exposures = exposuresAdapter.fromJson(json)!!
+        return TestResults(
+            prefs.getString(KEY_SOURCE_DEVICE, "no-source")!!, prefs.getString(
+                KEY_TEST_ID, "no-test-id"
+            )!!, exposures
+        )
     }
 
-    fun getExposureInformation(): Flow<List<ExposureInfo>> = callbackFlow {
+    fun getTestResults(): Flow<TestResults> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, _ ->
-            offer(getExposuresFromPreferences(sharedPreferences))
+            offer(getTestResultsFromPreferences(sharedPreferences))
         }
 
-        offer(getExposuresFromPreferences(measurements))
+        offer(getTestResultsFromPreferences(measurements))
 
         measurements.registerOnSharedPreferenceChangeListener(listener)
 
@@ -181,12 +188,25 @@ class NotificationsRepository(
             .replace("/", "_").replace("+", "-")
     }
 
+    fun setSourceAndTestId(sourceDeviceId: String, testId: String) {
+        measurements.edit {
+            putString(KEY_SOURCE_DEVICE, sourceDeviceId)
+            putString(KEY_TEST_ID, testId)
+        }
+    }
+
     @JsonClass(generateAdapter = true)
     data class ExposureInfo(
         val attenuation: Int,
         val duration: Int,
         val transmissionRisk: Int,
         val totalRiskScore: Int
+    )
+
+    data class TestResults(
+        val sourceDeviceId: String,
+        val testId: String,
+        val exposures: List<ExposureInfo>
     )
 }
 
