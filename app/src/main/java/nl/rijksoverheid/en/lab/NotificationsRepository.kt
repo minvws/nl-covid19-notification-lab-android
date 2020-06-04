@@ -42,6 +42,7 @@ private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
 private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
 private const val KEY_SOURCE_DEVICE = "source_device"
 private const val KEY_TEST_ID = "test_id"
+private const val KEY_SCANNED_TEK = "scanned_tek"
 private const val ATTN_THRESHOLD_LOW = 42
 private const val ATTN_THRESHOLD_HIGH = 56
 
@@ -93,7 +94,8 @@ class NotificationsRepository(
                         it.attenuationValue,
                         it.durationMinutes,
                         it.transmissionRiskLevel,
-                        it.totalRiskScore
+                        it.totalRiskScore,
+                        it.attenuationDurationsInMinutes
                     )
                 })
             )
@@ -104,6 +106,7 @@ class NotificationsRepository(
         val json = prefs.getString("result", "[]") ?: "[]"
         val exposures = exposuresAdapter.fromJson(json)!!
         return TestResults(
+            prefs.getString(KEY_SCANNED_TEK, "") ?: "",
             prefs.getString(KEY_SOURCE_DEVICE, "no-source")!!, prefs.getString(
                 KEY_TEST_ID, "no-test-id"
             )!!, exposures
@@ -148,8 +151,11 @@ class NotificationsRepository(
         }
     }
 
-    suspend fun importTemporaryExposureKey(key: com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey): ImportTemporaryExposureKeysResult =
-        withContext(Dispatchers.IO) {
+    suspend fun importTemporaryExposureKey(key: com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey): ImportTemporaryExposureKeysResult {
+        measurements.edit {
+            putString(KEY_SCANNED_TEK, Base64.encodeToString(key.keyData, 0))
+        }
+        return withContext(Dispatchers.IO) {
             try {
                 val file = File(context.cacheDir, "keyimport")
                 val writer = KeyFileWriter(
@@ -183,6 +189,7 @@ class NotificationsRepository(
                 )
             }
         }
+    }
 
     private fun generateImportToken(): String {
         val tokenBytes = ByteArray(32)
@@ -203,10 +210,36 @@ class NotificationsRepository(
         val attenuation: Int,
         val duration: Int,
         val transmissionRisk: Int,
-        val totalRiskScore: Int
-    )
+        val totalRiskScore: Int,
+        val attenuationDurations: IntArray
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ExposureInfo
+
+            if (attenuation != other.attenuation) return false
+            if (duration != other.duration) return false
+            if (transmissionRisk != other.transmissionRisk) return false
+            if (totalRiskScore != other.totalRiskScore) return false
+            if (!attenuationDurations.contentEquals(other.attenuationDurations)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = attenuation
+            result = 31 * result + duration
+            result = 31 * result + transmissionRisk
+            result = 31 * result + totalRiskScore
+            result = 31 * result + attenuationDurations.contentHashCode()
+            return result
+        }
+    }
 
     data class TestResults(
+        val scannedTek: String,
         val sourceDeviceId: String,
         val testId: String,
         val exposures: List<ExposureInfo>

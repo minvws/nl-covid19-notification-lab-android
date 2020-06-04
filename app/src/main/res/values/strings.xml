@@ -22,8 +22,9 @@
     <string name="keys_test_id">Test id: %1$s</string>
     <string name="keys_device_id">Device name: %1$s</string>
     <string name="keys_share_results">Save results</string>
-    <string name="share_results">Test id: %1$s\nDevice name: %7$s\nSource device name: %2$s\nAttenuations: %3$s\nAttenuation durations: %8$s\nDurations: %4$s\nTotal risk scores: %5$s\nTransmission risk scores: %6$s</string>
+    <string name="share_results">Test id: %1$s\nDevice name: %7$s\nSource device name: %2$s\nAttenuations: %3$s\nTEK: %9$s\nAttenuation durations: %8$s\nDurations: %4$s\nTotal risk scores: %5$s\nTransmission risk scores: %6$s</string>
     <string name="share_results_title">Test results %2$s (%1$s)</string>
     <string name="device_name_hint">Device name</string>
     <string name="attenuation_durations">Attenuation durations: %1$s</string>
+    <string name="tek_base64">TEK: %1$s</string>
 </resources>

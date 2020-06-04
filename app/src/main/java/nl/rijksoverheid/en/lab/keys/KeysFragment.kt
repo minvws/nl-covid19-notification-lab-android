@@ -48,6 +48,7 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
 
             binding.testId.text = getString(R.string.keys_test_id, result.testId)
             binding.deviceId.text = getString(R.string.keys_device_id, result.sourceDeviceId)
+            binding.tekBase64.text = getString(R.string.tek_base64, result.scannedTek)
 
             binding.attenuations.text = getString(R.string.attenuations, attenuations)
             binding.attenuationDurations.text =
@@ -101,7 +102,8 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
                     totalRiskScores,
                     transmissionRiskScores,
                     viewModel.deviceName,
-                    attenuationDurations
+                    attenuationDurations,
+                    result.scannedTek
                 )
             )
             .intent
