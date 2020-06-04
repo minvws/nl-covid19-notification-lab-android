@@ -35,7 +35,8 @@ class LabViewModelFactory(private val context: Context) : ViewModelProvider.Fact
                 getDevicePreferences(context)
             ) as T
             KeysViewModel::class.java -> KeysViewModel(
-                repository
+                repository,
+                getDevicePreferences(context).getString("device_name", Build.MODEL)!!
             ) as T
             else -> throw IllegalStateException("Unknown view model class $modelClass")
         }

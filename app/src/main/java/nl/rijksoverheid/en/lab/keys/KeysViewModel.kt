@@ -14,7 +14,8 @@ import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import kotlinx.coroutines.launch
 import nl.rijksoverheid.en.lab.NotificationsRepository
 
-class KeysViewModel(private val repository: NotificationsRepository) : ViewModel() {
+class KeysViewModel(private val repository: NotificationsRepository, val deviceName: String) :
+    ViewModel() {
 
     val lastResults: LiveData<NotificationsRepository.TestResults> =
         repository.getTestResults().asLiveData(context = viewModelScope.coroutineContext)
