@@ -7,9 +7,11 @@
 package nl.rijksoverheid.en.lab.status
 
 import android.app.PendingIntent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Base64
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -28,11 +30,17 @@ import nl.rijksoverheid.en.lab.lifecyle.Event
 import org.json.JSONObject
 import timber.log.Timber
 
-class NotificationsStatusViewModel(private val repository: NotificationsRepository) : ViewModel() {
+class NotificationsStatusViewModel(
+    private val repository: NotificationsRepository,
+    private val preferences: SharedPreferences
+) : ViewModel() {
 
     val notificationState: LiveData<NotificationsState> = MutableLiveData()
     val notificationsResult: LiveData<Event<NotificationsStatusResult>> = MutableLiveData()
     val shareTekResult: LiveData<Event<ShareTekResult>> = MutableLiveData()
+
+    val testId = MutableLiveData("")
+    val deviceName = MutableLiveData(preferences.getString("device_name", "")!!)
 
     init {
         viewModelScope.launch {
@@ -106,6 +114,10 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
         (shareTekResult as MutableLiveData).value = Event(result)
     }
 
+    fun canShareTek(): Boolean {
+        return deviceName.value!!.isNotBlank() && testId.value!!.isNotBlank() && notificationState.value == NotificationsState.Enabled
+    }
+
     fun shareTek(size: Int) {
         viewModelScope.launch {
             when (val result = repository.exportTemporaryExposureKeys()) {
@@ -139,17 +151,21 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
             )
             .put(
                 "rollingPeriod",
-                latestKey.rollingPeriod
+                NotificationsRepository.DEFAULT_ROLLING_PERIOD
             )
             .put(
                 "transmissionRiskLevel",
                 latestKey.transmissionRiskLevel
             )
+            .put("testId", testId.value)
+            .put("deviceId", deviceName.value)
+
         val bitmap = encodeAsQRCode(size, json.toString())
         bitmap?.let {
             updateResult(
                 ShareTekResult.Success(
-                    it
+                    it,
+                    Base64.encodeToString(latestKey.keyData, 0)
                 )
             )
         } ?: Timber.w("QR Code could not be generated")
@@ -172,6 +188,12 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
         return bitmap
     }
 
+    fun storeDeviceId() {
+        preferences.edit {
+            putString("device_name", deviceName.value!!)
+        }
+    }
+
     sealed class NotificationsState {
         object Enabled : NotificationsState()
         object Disabled : NotificationsState()
@@ -182,7 +204,7 @@ class NotificationsStatusViewModel(private val repository: NotificationsReposito
         data class RequestConsent(val resolution: PendingIntent) : ShareTekResult()
         object Error : ShareTekResult()
         object NoKeys : ShareTekResult()
-        data class Success(val qrCode: Bitmap) : ShareTekResult()
+        data class Success(val qrCode: Bitmap, val keyBase64: String) : ShareTekResult()
     }
 
     sealed class NotificationsStatusResult {

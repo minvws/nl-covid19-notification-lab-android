@@ -10,7 +10,7 @@ to be able to analyze the protocol, the apps may exchange TEK keys at will. TEKs
 no relationship to COVID testing.
 
 Although we always welcome contributions in the project, note that we consider this app a
-'disposable' and it will not be actively maintained. (A separate repository will be published
+'disposable' and it will not be actively maintained after technical testing has completed. (A separate repository will be published
 with the actual proof of concept app for the Dutch exposure notification implementation).
 
 Keep in mind that the Google Exposure Notification API is only accessible by verified health
