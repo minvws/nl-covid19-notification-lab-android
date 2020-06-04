@@ -59,6 +59,10 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
                 getString(R.string.transmissionRisk, transmissionRiskScores)
         }
 
+        viewModel.scanEnabled.observe(viewLifecycleOwner) {
+            binding.scanTekQr.isEnabled = it
+        }
+
         binding.scanTekQr.setOnClickListener {
             startActivityForResult(
                 Intent(requireContext(), BarcodeScanActivity::class.java),
