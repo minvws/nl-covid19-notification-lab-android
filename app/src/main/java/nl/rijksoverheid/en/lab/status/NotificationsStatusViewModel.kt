@@ -7,9 +7,11 @@
 package nl.rijksoverheid.en.lab.status
 
 import android.app.PendingIntent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Base64
+import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -30,7 +32,7 @@ import timber.log.Timber
 
 class NotificationsStatusViewModel(
     private val repository: NotificationsRepository,
-    val deviceId: String
+    private val preferences: SharedPreferences
 ) : ViewModel() {
 
     val notificationState: LiveData<NotificationsState> = MutableLiveData()
@@ -38,6 +40,7 @@ class NotificationsStatusViewModel(
     val shareTekResult: LiveData<Event<ShareTekResult>> = MutableLiveData()
 
     val testId = MutableLiveData("")
+    val deviceName = MutableLiveData(preferences.getString("device_name", "")!!)
 
     init {
         viewModelScope.launch {
@@ -111,6 +114,10 @@ class NotificationsStatusViewModel(
         (shareTekResult as MutableLiveData).value = Event(result)
     }
 
+    fun canShareTek(): Boolean {
+        return deviceName.value!!.isNotBlank() && testId.value!!.isNotBlank() && notificationState.value == NotificationsState.Enabled
+    }
+
     fun shareTek(size: Int) {
         viewModelScope.launch {
             when (val result = repository.exportTemporaryExposureKeys()) {
@@ -151,7 +158,7 @@ class NotificationsStatusViewModel(
                 latestKey.transmissionRiskLevel
             )
             .put("testId", testId.value)
-            .put("deviceId", deviceId)
+            .put("deviceId", deviceName.value)
 
         val bitmap = encodeAsQRCode(size, json.toString())
         bitmap?.let {
@@ -178,6 +185,12 @@ class NotificationsStatusViewModel(
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         return bitmap
+    }
+
+    fun storeDeviceId() {
+        preferences.edit {
+            putString("device_name", deviceName.value!!)
+        }
     }
 
     sealed class NotificationsState {

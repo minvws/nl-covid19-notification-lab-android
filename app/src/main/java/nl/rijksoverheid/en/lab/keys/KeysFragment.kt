@@ -10,7 +10,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Base64
 import android.view.View
 import androidx.core.app.ShareCompat
@@ -68,12 +67,15 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         val totalRiskScores = result.exposures.map { it.totalRiskScore }.joinToString()
         val transmissionRiskScores = result.exposures.map { it.transmissionRisk }.joinToString()
 
-        val deviceId =
-            Settings.Global.getString(requireContext().contentResolver, Settings.Global.DEVICE_NAME)
-
         val intent = ShareCompat.IntentBuilder.from(requireActivity())
             .setChooserTitle(R.string.keys_share_results)
-            .setSubject(getString(R.string.share_results_title, deviceId, result.testId))
+            .setSubject(
+                getString(
+                    R.string.share_results_title,
+                    viewModel.deviceName,
+                    result.testId
+                )
+            )
             .setText(
                 getString(
                     R.string.share_results,
@@ -83,7 +85,7 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
                     durations,
                     totalRiskScores,
                     transmissionRiskScores,
-                    deviceId
+                    viewModel.deviceName
                 )
             )
             .intent

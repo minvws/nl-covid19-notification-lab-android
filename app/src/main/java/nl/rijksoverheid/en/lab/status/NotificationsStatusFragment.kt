@@ -42,7 +42,7 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
                 NotificationsStatusViewModel.NotificationsState.Enabled -> {
                     Timber.d("Enabled")
                     binding.enableExposureNotification.isChecked = true
-                    binding.shareTek.isEnabled = !viewModel.testId.value.isNullOrBlank()
+                    binding.shareTek.isEnabled = viewModel.canShareTek()
                 }
                 NotificationsStatusViewModel.NotificationsState.Disabled -> {
                     Timber.d("Disabled")
@@ -115,7 +115,12 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
 
         viewModel.testId.observe(viewLifecycleOwner) {
             binding.tekQrCode.setImageBitmap(null)
-            binding.shareTek.isEnabled = !it.isBlank() && viewModel.notificationState.value == NotificationsStatusViewModel.NotificationsState.Enabled
+            binding.shareTek.isEnabled = viewModel.canShareTek()
+        }
+
+        viewModel.deviceName.observe(viewLifecycleOwner) {
+            binding.tekQrCode.setImageBitmap(null)
+            binding.shareTek.isEnabled = viewModel.canShareTek()
         }
 
         binding.enableExposureNotification.setOnCheckedChangeListener { _, isChecked ->
@@ -126,7 +131,7 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
             shareTek()
         }
 
-        binding.deviceName.text = viewModel.deviceId
+        binding.deviceName.setText(viewModel.deviceName.value)
 
         binding.testId.setText(viewModel.testId.value)
 
@@ -134,9 +139,16 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
             viewModel.testId.value = it.toString().trim()
         }
 
+        binding.deviceName.addTextChangedListener {
+            viewModel.deviceName.value = it.toString().trim()
+            viewModel.storeDeviceId()
+        }
+
         binding.testId.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                shareTek()
+                if (viewModel.canShareTek()) {
+                    shareTek()
+                }
                 closeKeyboard()
             }
             true
