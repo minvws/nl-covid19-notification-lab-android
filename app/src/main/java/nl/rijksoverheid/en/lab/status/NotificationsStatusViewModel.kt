@@ -164,7 +164,8 @@ class NotificationsStatusViewModel(
         bitmap?.let {
             updateResult(
                 ShareTekResult.Success(
-                    it
+                    it,
+                    Base64.encodeToString(latestKey.keyData, 0)
                 )
             )
         } ?: Timber.w("QR Code could not be generated")
@@ -203,7 +204,7 @@ class NotificationsStatusViewModel(
         data class RequestConsent(val resolution: PendingIntent) : ShareTekResult()
         object Error : ShareTekResult()
         object NoKeys : ShareTekResult()
-        data class Success(val qrCode: Bitmap) : ShareTekResult()
+        data class Success(val qrCode: Bitmap, val keyBase64: String) : ShareTekResult()
     }
 
     sealed class NotificationsStatusResult {

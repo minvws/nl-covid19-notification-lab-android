@@ -84,9 +84,12 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
 
         viewModel.shareTekResult.observe(viewLifecycleOwner, EventObserver {
             when (it) {
-                is NotificationsStatusViewModel.ShareTekResult.Success -> binding.tekQrCode.setImageBitmap(
-                    it.qrCode
-                )
+                is NotificationsStatusViewModel.ShareTekResult.Success -> {
+                    binding.tekQrCode.setImageBitmap(
+                        it.qrCode
+                    )
+                    binding.tekBase64.text = it.keyBase64
+                }
                 is NotificationsStatusViewModel.ShareTekResult.RequestConsent -> {
                     startIntentSenderForResult(
                         it.resolution.intentSender,

@@ -39,14 +39,28 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
             val durations = result.exposures.map { it.duration }.joinToString()
             val totalRiskScores = result.exposures.map { it.totalRiskScore }.joinToString()
             val transmissionRiskScores = result.exposures.map { it.transmissionRisk }.joinToString()
+            val attenuationDurations = result.exposures.map {
+                it.attenuationDurations.joinToString(
+                    prefix = "[",
+                    postfix = "]"
+                )
+            }
+
             binding.testId.text = getString(R.string.keys_test_id, result.testId)
             binding.deviceId.text = getString(R.string.keys_device_id, result.sourceDeviceId)
+            binding.tekBase64.text = getString(R.string.tek_base64, result.scannedTek)
 
             binding.attenuations.text = getString(R.string.attenuations, attenuations)
+            binding.attenuationDurations.text =
+                getString(R.string.attenuation_durations, attenuationDurations)
             binding.durations.text = getString(R.string.durations, durations)
             binding.totalRiskScore.text = getString(R.string.riskScore, totalRiskScores)
             binding.transmissionRiskScore.text =
                 getString(R.string.transmissionRisk, transmissionRiskScores)
+        }
+
+        viewModel.scanEnabled.observe(viewLifecycleOwner) {
+            binding.scanTekQr.isEnabled = it
         }
 
         binding.scanTekQr.setOnClickListener {
@@ -66,6 +80,12 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         val durations = result.exposures.map { it.duration }.joinToString()
         val totalRiskScores = result.exposures.map { it.totalRiskScore }.joinToString()
         val transmissionRiskScores = result.exposures.map { it.transmissionRisk }.joinToString()
+        val attenuationDurations = result.exposures.map {
+            it.attenuationDurations.joinToString(
+                prefix = "[",
+                postfix = "]"
+            )
+        }
 
         val intent = ShareCompat.IntentBuilder.from(requireActivity())
             .setChooserTitle(R.string.keys_share_results)
@@ -85,7 +105,9 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
                     durations,
                     totalRiskScores,
                     transmissionRiskScores,
-                    viewModel.deviceName
+                    viewModel.deviceName,
+                    attenuationDurations,
+                    result.scannedTek
                 )
             )
             .intent
