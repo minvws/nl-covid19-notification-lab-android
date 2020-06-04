@@ -6,7 +6,12 @@
  */
 package nl.rijksoverheid.en.lab
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.nearby.Nearby
@@ -14,7 +19,7 @@ import com.google.android.gms.nearby.exposurenotification.ExposureNotificationCl
 import nl.rijksoverheid.en.lab.keys.KeysViewModel
 import nl.rijksoverheid.en.lab.status.NotificationsStatusViewModel
 
-class LabViewModelFactory(context: Context) : ViewModelProvider.Factory {
+class LabViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     private val repository: NotificationsRepository by lazy {
         NotificationsRepository(
             context,
@@ -26,13 +31,29 @@ class LabViewModelFactory(context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         return when (modelClass) {
             NotificationsStatusViewModel::class.java -> NotificationsStatusViewModel(
-                repository
+                repository,
+                getDevicePreferences(context)
             ) as T
             KeysViewModel::class.java -> KeysViewModel(
-                repository
+                repository,
+                getDevicePreferences(context).getString("device_name", Build.MODEL)!!
             ) as T
             else -> throw IllegalStateException("Unknown view model class $modelClass")
         }
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun getDevicePreferences(context: Context): SharedPreferences {
+        val prefs = context.getSharedPreferences("device", 0)
+        if (!prefs.contains("device_name")) {
+            prefs.edit {
+                putString("device_name",
+                    Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+                        ?: Build.MODEL
+                )
+            }
+        }
+        return prefs
     }
 
     private fun createExposureNotificationClient(context: Context): ExposureNotificationClient =

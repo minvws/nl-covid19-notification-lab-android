@@ -9,17 +9,25 @@ package nl.rijksoverheid.en.lab.keys
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import kotlinx.coroutines.launch
 import nl.rijksoverheid.en.lab.NotificationsRepository
+import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 
-class KeysViewModel(private val repository: NotificationsRepository) : ViewModel() {
+class KeysViewModel(private val repository: NotificationsRepository, val deviceName: String) :
+    ViewModel() {
 
-    val lastResults: LiveData<List<NotificationsRepository.ExposureInfo>> =
-        repository.getExposureInformation().asLiveData(context = viewModelScope.coroutineContext)
+    val lastResults: LiveData<NotificationsRepository.TestResults> =
+        repository.getTestResults().asLiveData(context = viewModelScope.coroutineContext)
 
-    fun importKey(tek: TemporaryExposureKey) {
+    val scanEnabled: LiveData<Boolean> =
+        liveData { emit(repository.getStatus() == StatusResult.Enabled) }
+
+    fun importKey(tek: TemporaryExposureKey, sourceDeviceId: String, testId: String) {
+        repository.clearExposureInformation()
+        repository.setSourceAndTestId(sourceDeviceId, testId)
         viewModelScope.launch {
             repository.importTemporaryExposureKey(tek)
         }
