@@ -42,6 +42,8 @@ private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
 private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
 private const val KEY_SOURCE_DEVICE = "source_device"
 private const val KEY_TEST_ID = "test_id"
+private const val ATTN_THRESHOLD_LOW = 42
+private const val ATTN_THRESHOLD_HIGH = 56
 
 class NotificationsRepository(
     private val context: Context,
@@ -167,6 +169,7 @@ class NotificationsRepository(
                         .setTransmissionRiskScores(*EQUAL_WEIGHTS)
                         .setTransmissionRiskWeight(1)
                         .setMinimumRiskScore(1)
+                        .setDurationAtAttenuationThresholds(ATTN_THRESHOLD_LOW, ATTN_THRESHOLD_HIGH)
                         .build(),
                     generateImportToken()
                 ).addOnFailureListener {
