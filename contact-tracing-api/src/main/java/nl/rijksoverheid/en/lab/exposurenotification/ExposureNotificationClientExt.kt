@@ -71,7 +71,7 @@ suspend fun ExposureNotificationClient.requestDisableNotifications() =
         }
     }
 
-suspend fun ExposureNotificationClient.getStatus() = suspendCoroutine<StatusResult> { c ->
+suspend fun ExposureNotificationClient.getApiStatus() = suspendCoroutine<StatusResult> { c ->
     isEnabled.apply {
         addOnSuccessListener { c.resume(if (it) StatusResult.Enabled else StatusResult.Disabled) }
         addOnFailureListener {

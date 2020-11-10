@@ -26,8 +26,8 @@ import nl.rijksoverheid.en.lab.exposurenotification.StartResult
 import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 import nl.rijksoverheid.en.lab.exposurenotification.StopResult
 import nl.rijksoverheid.en.lab.exposurenotification.TemporaryExposureKeysResult
+import nl.rijksoverheid.en.lab.exposurenotification.getApiStatus
 import nl.rijksoverheid.en.lab.exposurenotification.getExposureDetails
-import nl.rijksoverheid.en.lab.exposurenotification.getStatus
 import nl.rijksoverheid.en.lab.exposurenotification.getTemporaryExposureKeys
 import nl.rijksoverheid.en.lab.exposurenotification.requestDisableNotifications
 import nl.rijksoverheid.en.lab.exposurenotification.requestEnableNotifications
@@ -74,7 +74,7 @@ class NotificationsRepository(
     }
 
     suspend fun getStatus(): StatusResult {
-        return exposureNotificationClient.getStatus()
+        return exposureNotificationClient.getApiStatus()
     }
 
     fun clearExposureInformation() {

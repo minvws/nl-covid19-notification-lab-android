@@ -61,7 +61,7 @@ class BarcodeScanActivity : AppCompatActivity() {
         preview.setOnPreviewOutputUpdateListener { previewOutput ->
             val parent = textureView.parent as ViewGroup
             parent.removeView(textureView)
-            textureView.surfaceTexture = previewOutput.surfaceTexture
+            textureView.setSurfaceTexture(previewOutput.surfaceTexture)
             parent.addView(textureView, 0)
         }
 
