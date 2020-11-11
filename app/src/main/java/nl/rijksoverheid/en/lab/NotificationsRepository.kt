@@ -8,35 +8,34 @@ package nl.rijksoverheid.en.lab
 
 import android.app.PendingIntent
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Base64
 import androidx.core.content.edit
-import com.google.android.gms.nearby.exposurenotification.ExposureConfiguration
+import com.google.android.gms.nearby.exposurenotification.DiagnosisKeyFileProvider
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import nl.rijksoverheid.en.lab.exposurenotification.StartResult
 import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 import nl.rijksoverheid.en.lab.exposurenotification.StopResult
 import nl.rijksoverheid.en.lab.exposurenotification.TemporaryExposureKeysResult
 import nl.rijksoverheid.en.lab.exposurenotification.getApiStatus
-import nl.rijksoverheid.en.lab.exposurenotification.getExposureDetails
 import nl.rijksoverheid.en.lab.exposurenotification.getTemporaryExposureKeys
 import nl.rijksoverheid.en.lab.exposurenotification.requestDisableNotifications
 import nl.rijksoverheid.en.lab.exposurenotification.requestEnableNotifications
+import nl.rijksoverheid.en.lab.exposurenotification.retrieveExposureWindows
 import nl.rijksoverheid.en.lab.keys.KeyFileSigner
 import nl.rijksoverheid.en.lab.keys.KeyFileWriter
+import nl.rijksoverheid.en.lab.storage.TestResultDatabase
+import nl.rijksoverheid.en.lab.storage.model.ExposureWindow
+import nl.rijksoverheid.en.lab.storage.model.TestResult
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
-import java.security.SecureRandom
+import java.util.UUID
 
 private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
 private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
@@ -48,7 +47,8 @@ private const val ATTN_THRESHOLD_HIGH = 56
 
 class NotificationsRepository(
     private val context: Context,
-    private val exposureNotificationClient: ExposureNotificationClient
+    private val exposureNotificationClient: ExposureNotificationClient,
+    private val db: TestResultDatabase
 ) {
 
     companion object {
@@ -83,49 +83,23 @@ class NotificationsRepository(
         }
     }
 
-    suspend fun storeExposureInformation(token: String) {
-        val details = exposureNotificationClient.getExposureDetails(token)
-
-        measurements.edit {
-            putString(
-                "result",
-                exposuresAdapter.toJson(details.map {
-                    ExposureInfo(
-                        it.attenuationValue,
-                        it.durationMinutes,
-                        it.transmissionRiskLevel,
-                        it.totalRiskScore,
-                        it.attenuationDurationsInMinutes
-                    )
-                })
-            )
-        }
-    }
-
-    private fun getTestResultsFromPreferences(prefs: SharedPreferences): TestResults {
-        val json = prefs.getString("result", "[]") ?: "[]"
-        val exposures = exposuresAdapter.fromJson(json)!!
-        return TestResults(
-            prefs.getString(KEY_SCANNED_TEK, "") ?: "",
-            prefs.getString(KEY_SOURCE_DEVICE, "no-source")!!, prefs.getString(
-                KEY_TEST_ID, "no-test-id"
-            )!!, exposures
+    suspend fun storeExposureInformation() {
+        val results = exposureNotificationClient.retrieveExposureWindows()
+        val testResult = TestResult(
+            UUID.randomUUID().toString(),
+            measurements.getString(KEY_SCANNED_TEK, null)!!,
+            measurements.getString(
+                KEY_SOURCE_DEVICE, null
+            )!!,
+            measurements.getString(KEY_TEST_ID, null)!!,
+            System.currentTimeMillis()
         )
+        val windows = results.map { ExposureWindow.fromExposureWindow(testResult.id, it) }
+        Timber.d("Storing exposure information $testResult ${windows.size} exposure windows")
+        db.getTestResultDao().storeTestResult(testResult.copy(exposureWindows = windows))
     }
 
-    fun getTestResults(): Flow<TestResults> = callbackFlow {
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, _ ->
-            offer(getTestResultsFromPreferences(sharedPreferences))
-        }
-
-        offer(getTestResultsFromPreferences(measurements))
-
-        measurements.registerOnSharedPreferenceChangeListener(listener)
-
-        awaitClose {
-            measurements.unregisterOnSharedPreferenceChangeListener(listener)
-        }
-    }
+    fun getTestResults() = db.getTestResultDao().getTestResults()
 
     suspend fun exportTemporaryExposureKeys(): ExportTemporaryExposureKeysResult {
         val result = exposureNotificationClient.getTemporaryExposureKeys()
@@ -134,7 +108,7 @@ class NotificationsRepository(
         when (result) {
             is TemporaryExposureKeysResult.Success -> {
                 return if (result.keys.isNotEmpty()) {
-                    val latest = result.keys.maxBy { it.rollingStartIntervalNumber }!!
+                    val latest = result.keys.maxByOrNull { it.rollingStartIntervalNumber }!!
                     ExportTemporaryExposureKeysResult.Success(
                         latest
                     )
@@ -164,20 +138,9 @@ class NotificationsRepository(
                 writer.exportKey(key, file)
 
                 exposureNotificationClient.provideDiagnosisKeys(
-                    listOf(file),
-                    ExposureConfiguration.ExposureConfigurationBuilder()
-                        .setAttenuationScores(*SEQUENTIAL_WEIGHTS)
-                        .setAttenuationWeight(1)
-                        .setDaysSinceLastExposureScores(*EQUAL_WEIGHTS)
-                        .setDaysSinceLastExposureWeight(1)
-                        .setDurationScores(*EQUAL_WEIGHTS)
-                        .setDurationWeight(1)
-                        .setTransmissionRiskScores(*EQUAL_WEIGHTS)
-                        .setTransmissionRiskWeight(1)
-                        .setMinimumRiskScore(1)
-                        .setDurationAtAttenuationThresholds(ATTN_THRESHOLD_LOW, ATTN_THRESHOLD_HIGH)
-                        .build(),
-                    generateImportToken()
+                    DiagnosisKeyFileProvider(
+                        listOf(file)
+                    )
                 ).addOnFailureListener {
                     Timber.e(it, "Error importing keys")
                 }
@@ -189,13 +152,6 @@ class NotificationsRepository(
                 )
             }
         }
-    }
-
-    private fun generateImportToken(): String {
-        val tokenBytes = ByteArray(32)
-        SecureRandom().nextBytes(tokenBytes)
-        return Base64.encodeToString(tokenBytes, Base64.NO_WRAP or Base64.NO_PADDING)
-            .replace("/", "_").replace("+", "-")
     }
 
     fun setSourceAndTestId(sourceDeviceId: String, testId: String) {

@@ -17,7 +17,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.observe
 import nl.rijksoverheid.en.lab.BaseFragment
 import nl.rijksoverheid.en.lab.R
 import nl.rijksoverheid.en.lab.databinding.FragmentStatusBinding

@@ -10,6 +10,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.nearby.exposurenotification.ExposureInformation
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationStatusCodes
+import com.google.android.gms.nearby.exposurenotification.ExposureWindow
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -97,11 +98,20 @@ suspend fun ExposureNotificationClient.getTemporaryExposureKeys(): TemporaryExpo
             addOnFailureListener {
                 val apiException = it as ApiException
                 if (apiException.status.hasResolution()) {
-                    c.resume(TemporaryExposureKeysResult.RequireConsent(apiException.status.resolution))
+                    c.resume(TemporaryExposureKeysResult.RequireConsent(apiException.status.resolution!!))
                 } else {
                     c.resume(TemporaryExposureKeysResult.Error(it))
                 }
             }
+        }
+    }
+
+suspend fun ExposureNotificationClient.retrieveExposureWindows(): List<ExposureWindow> =
+    suspendCoroutine { c ->
+        exposureWindows.addOnSuccessListener {
+            c.resume(it ?: emptyList())
+        }.addOnFailureListener {
+            c.resume(emptyList())
         }
     }
 

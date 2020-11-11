@@ -19,8 +19,7 @@ import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 class KeysViewModel(private val repository: NotificationsRepository, val deviceName: String) :
     ViewModel() {
 
-    val lastResults: LiveData<NotificationsRepository.TestResults> =
-        repository.getTestResults().asLiveData(context = viewModelScope.coroutineContext)
+    val lastResults = repository.getTestResults().asLiveData(viewModelScope.coroutineContext)
 
     val scanEnabled: LiveData<Boolean> =
         liveData { emit(repository.getStatus() == StatusResult.Enabled) }

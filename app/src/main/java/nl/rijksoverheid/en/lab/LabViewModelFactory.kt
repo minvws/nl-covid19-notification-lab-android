@@ -18,12 +18,14 @@ import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
 import nl.rijksoverheid.en.lab.keys.KeysViewModel
 import nl.rijksoverheid.en.lab.status.NotificationsStatusViewModel
+import nl.rijksoverheid.en.lab.storage.TestResultDatabase
 
 class LabViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     private val repository: NotificationsRepository by lazy {
         NotificationsRepository(
             context,
-            createExposureNotificationClient(context)
+            createExposureNotificationClient(context),
+            TestResultDatabase.getInstance(context)
         )
     }
 

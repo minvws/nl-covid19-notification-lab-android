@@ -6,21 +6,25 @@
  */
 package nl.rijksoverheid.en.lab.keys
 
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.core.app.ShareCompat
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.observe
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
+import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.Section
+import com.xwray.groupie.viewbinding.GroupieViewHolder
 import nl.rijksoverheid.en.lab.BaseFragment
 import nl.rijksoverheid.en.lab.NotificationsRepository
 import nl.rijksoverheid.en.lab.R
 import nl.rijksoverheid.en.lab.barcodescanner.BarcodeScanActivity
 import nl.rijksoverheid.en.lab.databinding.FragmentKeysBinding
+import nl.rijksoverheid.en.lab.keys.items.TestResultItem
 import org.json.JSONObject
 
 private const val RC_SCAN_BARCODE = 1
@@ -28,50 +32,26 @@ private const val RC_SCAN_BARCODE = 1
 class KeysFragment : BaseFragment(R.layout.fragment_keys) {
 
     private val viewModel: KeysViewModel by viewModels()
+    private val adapter = GroupAdapter<GroupieViewHolder<*>>()
+    private val section = Section().also { adapter.add(it) }
+
+    private val scanBarcode = registerForActivityResult(ScanBarcodeContract()) {
+        it?.let {
+            importTek(it)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentKeysBinding.bind(view)
-
-        viewModel.lastResults.observe(viewLifecycleOwner) { result ->
-            binding.shareResults.isEnabled = true
-            val attenuations = result.exposures.map { it.attenuation }.joinToString()
-            val durations = result.exposures.map { it.duration }.joinToString()
-            val totalRiskScores = result.exposures.map { it.totalRiskScore }.joinToString()
-            val transmissionRiskScores = result.exposures.map { it.transmissionRisk }.joinToString()
-            val attenuationDurations = result.exposures.map {
-                it.attenuationDurations.joinToString(
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }
-
-            binding.testId.text = getString(R.string.keys_test_id, result.testId)
-            binding.deviceId.text = getString(R.string.keys_device_id, result.sourceDeviceId)
-            binding.tekBase64.text = getString(R.string.tek_base64, result.scannedTek)
-
-            binding.attenuations.text = getString(R.string.attenuations, attenuations)
-            binding.attenuationDurations.text =
-                getString(R.string.attenuation_durations, attenuationDurations)
-            binding.durations.text = getString(R.string.durations, durations)
-            binding.totalRiskScore.text = getString(R.string.riskScore, totalRiskScores)
-            binding.transmissionRiskScore.text =
-                getString(R.string.transmissionRisk, transmissionRiskScores)
+        binding.scan.setOnClickListener {
+            scanBarcode.launch(null)
         }
 
-        viewModel.scanEnabled.observe(viewLifecycleOwner) {
-            binding.scanTekQr.isEnabled = it
-        }
+        binding.list.adapter = adapter
 
-        binding.scanTekQr.setOnClickListener {
-            startActivityForResult(
-                Intent(requireContext(), BarcodeScanActivity::class.java),
-                RC_SCAN_BARCODE
-            )
-        }
-
-        binding.shareResults.setOnClickListener {
-            viewModel.lastResults.value?.let { shareResults(it) }
+        viewModel.lastResults.observe(viewLifecycleOwner) { results ->
+            section.update(results.reversed().map { TestResultItem(it) })
         }
     }
 
@@ -117,18 +97,25 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         startActivity(Intent.createChooser(intent, getString(R.string.keys_share_results)))
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SCAN_BARCODE && resultCode == Activity.RESULT_OK) {
-            val json =
-                JSONObject(data!!.getStringExtra(BarcodeScanActivity.RESULT_KEY_SCANNED_QR_CODE)!!)
-            val tek = TemporaryExposureKey.TemporaryExposureKeyBuilder().apply {
-                setKeyData(Base64.decode(json.getString("keyData"), 0))
-                setRollingStartIntervalNumber(json.getString("rollingStartNumber").toInt())
-                setRollingPeriod(NotificationsRepository.DEFAULT_ROLLING_PERIOD)
-                setTransmissionRiskLevel(1)
-            }.build()
-            viewModel.importKey(tek, json.getString("deviceId"), json.getString("testId"))
+    private fun importTek(result: String) {
+        val json = JSONObject(result)
+        val tek = TemporaryExposureKey.TemporaryExposureKeyBuilder().apply {
+            setKeyData(Base64.decode(json.getString("keyData"), 0))
+            setRollingStartIntervalNumber(json.getString("rollingStartNumber").toInt())
+            setRollingPeriod(NotificationsRepository.DEFAULT_ROLLING_PERIOD)
+            setTransmissionRiskLevel(1)
+        }.build()
+        viewModel.importKey(tek, json.getString("deviceId"), json.getString("testId"))
+    }
+
+    private class ScanBarcodeContract : ActivityResultContract<Unit, String?>() {
+        override fun createIntent(context: Context, input: Unit?): Intent {
+            return Intent(context, BarcodeScanActivity::class.java)
+        }
+
+        override fun parseResult(resultCode: Int, intent: Intent?): String? {
+            return intent?.getStringExtra(BarcodeScanActivity.RESULT_KEY_SCANNED_QR_CODE)
         }
     }
 }
+

@@ -4,16 +4,21 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 29
-
     defaultConfig {
         applicationId "nl.rijksoverheid.en.lab"
-        minSdkVersion 23
-        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += [
+                        "room.schemaLocation":"$projectDir/schemas".toString(),
+                        "room.incremental":"true",
+                        "room.expandProjection":"true"]
+            }
+        }
     }
 
     buildTypes {
@@ -82,6 +87,17 @@ dependencies {
     implementation 'com.google.android.gms:play-services-basement:17.5.0'
     implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
     implementation 'com.google.android.gms:play-services-tasks:17.2.0'
+
+    def groupie_version = "2.8.1"
+
+    implementation "com.xwray:groupie:$groupie_version"
+    implementation "com.xwray:groupie-viewbinding:$groupie_version"
+
+    def room_version = "2.2.5"
+
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
 
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
