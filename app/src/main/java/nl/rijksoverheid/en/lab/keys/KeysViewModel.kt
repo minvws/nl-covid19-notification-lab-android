@@ -18,12 +18,14 @@ import nl.rijksoverheid.en.lab.ImportTemporaryExposureKeysResult
 import nl.rijksoverheid.en.lab.NotificationsRepository
 import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 import nl.rijksoverheid.en.lab.lifecyle.Event
+import java.io.File
 
 class KeysViewModel(private val repository: NotificationsRepository, val deviceName: String) :
     ViewModel() {
 
     val lastResults = repository.getTestResults().asLiveData(viewModelScope.coroutineContext)
     val importResult: LiveData<Event<ImportTemporaryExposureKeysResult>> = MutableLiveData()
+    val exportFile: LiveData<Event<File>> = MutableLiveData()
 
     val scanEnabled: LiveData<Boolean> =
         liveData { emit(repository.getStatus() == StatusResult.Enabled) }
@@ -33,6 +35,13 @@ class KeysViewModel(private val repository: NotificationsRepository, val deviceN
         viewModelScope.launch {
             (importResult as MutableLiveData).value =
                 Event(repository.importTemporaryExposureKey(tek))
+        }
+    }
+
+    fun exportResults() {
+        viewModelScope.launch {
+            val file = repository.exportResults()
+            (exportFile as MutableLiveData).value = Event(file)
         }
     }
 

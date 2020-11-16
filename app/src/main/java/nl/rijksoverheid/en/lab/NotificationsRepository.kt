@@ -21,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import nl.rijksoverheid.en.lab.exposurenotification.StartResult
 import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
@@ -33,6 +35,7 @@ import nl.rijksoverheid.en.lab.exposurenotification.requestEnableNotifications
 import nl.rijksoverheid.en.lab.exposurenotification.retrieveExposureWindows
 import nl.rijksoverheid.en.lab.keys.KeyFileSigner
 import nl.rijksoverheid.en.lab.keys.KeyFileWriter
+import nl.rijksoverheid.en.lab.keys.ResultsExporter
 import nl.rijksoverheid.en.lab.storage.TestResultDatabase
 import nl.rijksoverheid.en.lab.storage.model.ExposureWindow
 import nl.rijksoverheid.en.lab.storage.model.TestResult
@@ -85,6 +88,18 @@ class NotificationsRepository(
 
     suspend fun clearResults() {
         db.getTestResultDao().removeTestResults()
+    }
+
+    suspend fun exportResults(): File {
+        val exportsDirectory = File(context.filesDir, "exports")
+        exportsDirectory.mkdirs()
+        val export = File(exportsDirectory, "export.csv")
+        val results = getTestResults().take(1).toList().flatten()
+        withContext(Dispatchers.IO) {
+            val exporter = ResultsExporter()
+            exporter.export(results, export)
+        }
+        return export
     }
 
     suspend fun storeExposureInformation() {
@@ -149,7 +164,7 @@ class NotificationsRepository(
             return ImportTemporaryExposureKeysResult.PreviousResults
         }
         measurements.edit {
-            putString(KEY_SCANNED_TEK, Base64.encodeToString(key.keyData, 0))
+            putString(KEY_SCANNED_TEK, Base64.encodeToString(key.keyData, Base64.NO_WRAP))
         }
         return withContext(Dispatchers.IO) {
             try {

@@ -18,13 +18,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="nl.rijksoverheid.en.lab.MainActivity" android:screenOrientation="portrait">
+        <activity
+            android:name="nl.rijksoverheid.en.lab.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
         <receiver
             android:name=".keys.ExposureNotificationStateUpdateReceiver"
             android:permission="com.google.android.gms.nearby.exposurenotification.EXPOSURE_CALLBACK">

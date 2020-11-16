@@ -13,11 +13,14 @@ import android.util.Base64
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.core.app.ShareCompat
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.fragment.app.viewModels
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.viewbinding.GroupieViewHolder
 import nl.rijksoverheid.en.lab.BaseFragment
+import nl.rijksoverheid.en.lab.BuildConfig
 import nl.rijksoverheid.en.lab.ImportTemporaryExposureKeysResult
 import nl.rijksoverheid.en.lab.NotificationsRepository
 import nl.rijksoverheid.en.lab.R
@@ -59,7 +62,7 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
                     ClearResultsDialogFragment().show(childFragmentManager, null)
                 }
                 R.id.export_results -> {
-
+                    viewModel.exportResults()
                 }
             }
             true
@@ -99,6 +102,15 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         viewModel.lastResults.observe(viewLifecycleOwner) { results ->
             section.testResults = results.reversed()
         }
+
+        viewModel.exportFile.observe(viewLifecycleOwner, EventObserver {
+            val uri = getUriForFile(requireContext(), "${BuildConfig.APPLICATION_ID}.files", it)
+            val builder = ShareCompat.IntentBuilder.from(requireActivity())
+                .setChooserTitle(R.string.export_results).setStream(uri)
+            builder.intent.setDataAndType(uri, "text/csv")
+            builder.intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            builder.startChooser()
+        })
     }
 
     private fun importTek(result: String) {
