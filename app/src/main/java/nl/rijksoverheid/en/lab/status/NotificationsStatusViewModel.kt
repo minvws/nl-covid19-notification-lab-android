@@ -127,7 +127,7 @@ class NotificationsStatusViewModel(
                     )
                 )
                 is ExportTemporaryExposureKeysResult.Success -> {
-                    generateQrCode(size, result.latestKey)
+                    generateQrCode(size, result.keys)
                 }
                 is ExportTemporaryExposureKeysResult.NoKeys -> {
                     updateResult(ShareTekResult.NoKeys)
@@ -140,7 +140,8 @@ class NotificationsStatusViewModel(
         }
     }
 
-    private fun generateQrCode(size: Int, latestKey: TemporaryExposureKey) {
+    private fun generateQrCode(size: Int, keys: List<TemporaryExposureKey>) {
+        val latestKey = keys.first() // appears to be the "latest key"
         val json = JSONObject()
             .put(
                 "keyData", Base64.encodeToString(latestKey.keyData, Base64.NO_WRAP)
@@ -157,6 +158,7 @@ class NotificationsStatusViewModel(
                 "transmissionRiskLevel",
                 latestKey.transmissionRiskLevel
             )
+            .put("allKeys", keys.map { Base64.encodeToString(it.keyData, Base64.NO_WRAP) })
             .put("testId", testId.value)
             .put("deviceId", deviceName.value)
 

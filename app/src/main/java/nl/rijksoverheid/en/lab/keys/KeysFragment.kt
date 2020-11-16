@@ -11,17 +11,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Base64
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.fragment.app.viewModels
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.viewbinding.GroupieViewHolder
 import nl.rijksoverheid.en.lab.BaseFragment
+import nl.rijksoverheid.en.lab.ImportTemporaryExposureKeysResult
 import nl.rijksoverheid.en.lab.NotificationsRepository
 import nl.rijksoverheid.en.lab.R
 import nl.rijksoverheid.en.lab.barcodescanner.BarcodeScanActivity
 import nl.rijksoverheid.en.lab.databinding.FragmentKeysBinding
 import nl.rijksoverheid.en.lab.keys.items.TestResultSection
+import nl.rijksoverheid.en.lab.lifecyle.EventObserver
 import org.json.JSONObject
 
 class KeysFragment : BaseFragment(R.layout.fragment_keys) {
@@ -49,6 +52,49 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         }
 
         binding.list.adapter = adapter
+        binding.toolbar.inflateMenu(R.menu.keys)
+        binding.toolbar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.clear_results -> {
+                    ClearResultsDialogFragment().show(childFragmentManager, null)
+                }
+                R.id.export_results -> {
+
+                }
+            }
+            true
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            ClearResultsDialogFragment.KEY_CLEAR_RESULTS,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getBoolean(ClearResultsDialogFragment.KEY_CLEAR_RESULTS, false)) {
+                viewModel.clearResults()
+            }
+        }
+
+        viewModel.importResult.observe(viewLifecycleOwner, EventObserver {
+            when (it) {
+                ImportTemporaryExposureKeysResult.Success -> {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.keys_import_tek_success,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                ImportTemporaryExposureKeysResult.PreviousResults -> {
+                    PreviousResultDialogFragment().show(childFragmentManager, null)
+                }
+                is ImportTemporaryExposureKeysResult.Error -> {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.keys_import_tek_failure,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        })
 
         viewModel.lastResults.observe(viewLifecycleOwner) { results ->
             section.testResults = results.reversed()

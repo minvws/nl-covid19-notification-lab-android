@@ -12,11 +12,15 @@ import android.util.Base64
 import androidx.core.content.edit
 import com.google.android.gms.nearby.exposurenotification.DiagnosisKeyFileProvider
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
+import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import nl.rijksoverheid.en.lab.exposurenotification.StartResult
 import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
@@ -35,6 +39,8 @@ import nl.rijksoverheid.en.lab.storage.model.TestResult
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
 private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
@@ -77,10 +83,8 @@ class NotificationsRepository(
         return exposureNotificationClient.getApiStatus()
     }
 
-    fun clearExposureInformation() {
-        measurements.edit {
-            putString("result", "[]")
-        }
+    suspend fun clearResults() {
+        db.getTestResultDao().removeTestResults()
     }
 
     suspend fun storeExposureInformation() {
@@ -99,7 +103,18 @@ class NotificationsRepository(
         db.getTestResultDao().storeTestResult(testResult.copy(exposureWindows = windows))
     }
 
-    fun getTestResults() = db.getTestResultDao().getTestResults()
+    @ExperimentalCoroutinesApi
+    fun getTestResults(): Flow<List<TestResult>> {
+        return db.getTestResultDao().getTestResults().map { results ->
+            results.map { testResult ->
+                val windows = db.getTestResultDao().getExposureWindows(testResult.id).map {
+                    val scans = db.getTestResultDao().getScanInstances(it.id)
+                    it.copy(scanInstances = scans)
+                }
+                testResult.copy(exposureWindows = windows)
+            }
+        }
+    }
 
     suspend fun exportTemporaryExposureKeys(): ExportTemporaryExposureKeysResult {
         val result = exposureNotificationClient.getTemporaryExposureKeys()
@@ -107,11 +122,14 @@ class NotificationsRepository(
 
         when (result) {
             is TemporaryExposureKeysResult.Success -> {
-                return if (result.keys.isNotEmpty()) {
-                    val latest = result.keys.maxByOrNull { it.rollingStartIntervalNumber }!!
-                    ExportTemporaryExposureKeysResult.Success(
-                        latest
-                    )
+                val tekDateTime = LocalDate.now(
+                    ZoneId.of("UTC")
+                ).atStartOfDay().atZone(ZoneId.of("UTC"))
+                val rollingStartIntervalNumber = tekDateTime.toEpochSecond() / 600
+                val keysForToday =
+                    result.keys.filter { it.rollingStartIntervalNumber == rollingStartIntervalNumber.toInt() }
+                return if (keysForToday.isNotEmpty()) {
+                    ExportTemporaryExposureKeysResult.Success(keysForToday)
                 } else {
                     ExportTemporaryExposureKeysResult.NoKeys
                 }
@@ -125,7 +143,11 @@ class NotificationsRepository(
         }
     }
 
-    suspend fun importTemporaryExposureKey(key: com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey): ImportTemporaryExposureKeysResult {
+    suspend fun importTemporaryExposureKey(key: TemporaryExposureKey): ImportTemporaryExposureKeysResult {
+        val currentMatches = exposureNotificationClient.retrieveExposureWindows()
+        if (currentMatches.isNotEmpty()) {
+            return ImportTemporaryExposureKeysResult.PreviousResults
+        }
         measurements.edit {
             putString(KEY_SCANNED_TEK, Base64.encodeToString(key.keyData, 0))
         }
@@ -203,7 +225,7 @@ class NotificationsRepository(
 }
 
 sealed class ExportTemporaryExposureKeysResult {
-    data class Success(val latestKey: com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey) :
+    data class Success(val keys: List<TemporaryExposureKey>) :
         ExportTemporaryExposureKeysResult()
 
     object NoKeys : ExportTemporaryExposureKeysResult()
@@ -213,5 +235,6 @@ sealed class ExportTemporaryExposureKeysResult {
 
 sealed class ImportTemporaryExposureKeysResult {
     object Success : ImportTemporaryExposureKeysResult()
+    object PreviousResults : ImportTemporaryExposureKeysResult()
     data class Error(val exception: Exception) : ImportTemporaryExposureKeysResult()
 }

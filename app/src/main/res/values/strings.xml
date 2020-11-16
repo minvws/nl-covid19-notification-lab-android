@@ -27,4 +27,17 @@
     <string name="device_name_hint">Device name</string>
     <string name="attenuation_durations">Attenuation durations: %1$s</string>
     <string name="tek_base64">TEK: %1$s</string>
+    <string name="scan_instance_result">Attn min: %1$d Db, typical: %2$d Db, duration: %3$d s</string>
+    <string name="test_result_no_scans">no scan results</string>
+    <string name="keys_import_tek_success">Imported TEK</string>
+    <string name="keys_import_tek_failure">Error processing TEK</string>
+    <string name="keys_previous_result_message">Previous matches found on the device. Please remove these matches before scanning.</string>
+    <string name="keys_previous_result_positive">Remove</string>
+    <string name="keys_previous_result_title">Previous results found</string>
+    <string name="export_results">Export CSV</string>
+    <string name="clear_results">Clear results</string>
+    <string name="clear_results_title">Remove test results</string>
+    <string name="clear_results_message">Remove all test results?</string>
+    <string name="clear_results_negative">Cancel</string>
+    <string name="clear_results_positive">Clear</string>
 </resources>
