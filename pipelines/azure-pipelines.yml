@@ -1,0 +1,47 @@
+name: '$(Date:yyyyMMdd)$(Rev:.r)-$(BuildID)'
+trigger:
+  - master
+
+variables:
+  - name: GRADLE_USER_HOME
+    value: $(Pipeline.Workspace)/.gradle
+  - name: BUILD_ID
+    value: $(Build.BuildId)
+  - name: GRADLE_JVM_OPTIONS
+    value: '-Xmx4000m'
+  - name: GRADLE_OPTIONS
+    value: '--build-cache'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: build
+    displayName: Build
+    jobs:
+      - job: Build
+        steps:
+          - checkout: self
+            clean: true
+          - task: Cache@2
+            displayName: Cache
+            inputs:
+              key: gradle | gradle/wrapper/gradle-wrapper.jar | "$(Agent.OS)"
+              path: $(GRADLE_USER_HOME)
+              cacheHitVar: gradle
+          - task: Gradle@2
+            displayName: Enforce formatting
+            inputs:
+              gradleOptions: $(GRADLE_JVM_OPTIONS)
+              options: $(GRADLE_OPTIONS)
+              publishJUnitResults: false
+              tasks: spotlessCheck
+          - task: Gradle@2
+            displayName: Build and test
+            inputs:
+              gradleWrapperFile: gradlew
+              options: $(GRADLE_OPTIONS)
+              tasks: 'app:assemDevDebug'
+              publishJUnitResults: false
+              jdkVersionOption: '1.11'
+              gradleOptions: $(GRADLE_JVM_OPTIONS)
