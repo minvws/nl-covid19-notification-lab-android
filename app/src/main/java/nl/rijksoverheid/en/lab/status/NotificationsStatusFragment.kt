@@ -116,12 +116,12 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
         })
 
         viewModel.testId.observe(viewLifecycleOwner) {
-            binding.tekQrCode.setImageBitmap(null)
+            viewModel.updateQrCode(resources.getDimensionPixelSize(R.dimen.qr_code))
             binding.shareTek.isEnabled = viewModel.canShareTek()
         }
 
         viewModel.deviceName.observe(viewLifecycleOwner) {
-            binding.tekQrCode.setImageBitmap(null)
+            viewModel.updateQrCode(resources.getDimensionPixelSize(R.dimen.qr_code))
             binding.shareTek.isEnabled = viewModel.canShareTek()
         }
 
@@ -148,9 +148,6 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
 
         binding.testId.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                if (viewModel.canShareTek()) {
-                    shareTek()
-                }
                 closeKeyboard()
             }
             true

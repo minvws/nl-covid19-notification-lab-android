@@ -41,6 +41,7 @@ class NotificationsStatusViewModel(
 
     val testId = MutableLiveData("")
     val deviceName = MutableLiveData(preferences.getString("device_name", "")!!)
+    private var currentKeys: List<TemporaryExposureKey> = emptyList()
 
     init {
         viewModelScope.launch {
@@ -127,6 +128,7 @@ class NotificationsStatusViewModel(
                     )
                 )
                 is ExportTemporaryExposureKeysResult.Success -> {
+                    currentKeys = result.keys
                     generateQrCode(size, result.keys)
                 }
                 is ExportTemporaryExposureKeysResult.NoKeys -> {
@@ -193,6 +195,12 @@ class NotificationsStatusViewModel(
     fun storeDeviceId() {
         preferences.edit {
             putString("device_name", deviceName.value!!)
+        }
+    }
+
+    fun updateQrCode(size: Int) {
+        if (currentKeys.isNotEmpty()) {
+            generateQrCode(size, currentKeys)
         }
     }
 
