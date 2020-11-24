@@ -41,7 +41,11 @@ stages:
             inputs:
               gradleWrapperFile: gradlew
               options: $(GRADLE_OPTIONS)
-              tasks: 'app:assemDevDebug'
+              tasks: 'app:assemDebug'
               publishJUnitResults: false
               jdkVersionOption: '1.11'
               gradleOptions: $(GRADLE_JVM_OPTIONS)
+          - publish: app/build/outputs/apk
+            displayName: Publish APKs artifacts
+            artifact: apk
+
