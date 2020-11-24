@@ -49,7 +49,8 @@ class LabViewModelFactory(private val context: Context) : ViewModelProvider.Fact
         val prefs = context.getSharedPreferences("device", 0)
         if (!prefs.contains("device_name")) {
             prefs.edit {
-                putString("device_name",
+                putString(
+                    "device_name",
                     Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
                         ?: Build.MODEL
                 )

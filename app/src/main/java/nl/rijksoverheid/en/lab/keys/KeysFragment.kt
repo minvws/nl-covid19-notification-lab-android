@@ -77,40 +77,46 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
             }
         }
 
-        viewModel.importResult.observe(viewLifecycleOwner, EventObserver {
-            when (it) {
-                ImportTemporaryExposureKeysResult.Success -> {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.keys_import_tek_success,
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                ImportTemporaryExposureKeysResult.PreviousResults -> {
-                    PreviousResultDialogFragment().show(childFragmentManager, null)
-                }
-                is ImportTemporaryExposureKeysResult.Error -> {
-                    Toast.makeText(
-                        requireContext(),
-                        R.string.keys_import_tek_failure,
-                        Toast.LENGTH_LONG
-                    ).show()
+        viewModel.importResult.observe(
+            viewLifecycleOwner,
+            EventObserver {
+                when (it) {
+                    ImportTemporaryExposureKeysResult.Success -> {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.keys_import_tek_success,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    ImportTemporaryExposureKeysResult.PreviousResults -> {
+                        PreviousResultDialogFragment().show(childFragmentManager, null)
+                    }
+                    is ImportTemporaryExposureKeysResult.Error -> {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.keys_import_tek_failure,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
-        })
+        )
 
         viewModel.lastResults.observe(viewLifecycleOwner) { results ->
             section.testResults = results.reversed()
         }
 
-        viewModel.exportFile.observe(viewLifecycleOwner, EventObserver {
-            val uri = getUriForFile(requireContext(), "${BuildConfig.APPLICATION_ID}.files", it)
-            val builder = ShareCompat.IntentBuilder.from(requireActivity())
-                .setChooserTitle(R.string.export_results).setStream(uri)
-            builder.intent.setDataAndType(uri, "text/csv")
-            builder.intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            builder.startChooser()
-        })
+        viewModel.exportFile.observe(
+            viewLifecycleOwner,
+            EventObserver {
+                val uri = getUriForFile(requireContext(), "${BuildConfig.APPLICATION_ID}.files", it)
+                val builder = ShareCompat.IntentBuilder.from(requireActivity())
+                    .setChooserTitle(R.string.export_results).setStream(uri)
+                builder.intent.setDataAndType(uri, "text/csv")
+                builder.intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                builder.startChooser()
+            }
+        )
     }
 
     private fun importTek(result: String) {
@@ -134,4 +140,3 @@ class KeysFragment : BaseFragment(R.layout.fragment_keys) {
         }
     }
 }
-

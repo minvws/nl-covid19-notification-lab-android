@@ -56,64 +56,70 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
             }
         }
 
-        viewModel.notificationsResult.observe(viewLifecycleOwner, EventObserver {
-            when (it) {
-                is NotificationsStatusViewModel.NotificationsStatusResult.ConsentRequired -> {
-                    try {
-                        requireActivity().startIntentSenderFromFragment(
-                            this,
-                            it.intent.intentSender,
-                            RC_REQUEST_PERMISSION,
+        viewModel.notificationsResult.observe(
+            viewLifecycleOwner,
+            EventObserver {
+                when (it) {
+                    is NotificationsStatusViewModel.NotificationsStatusResult.ConsentRequired -> {
+                        try {
+                            requireActivity().startIntentSenderFromFragment(
+                                this,
+                                it.intent.intentSender,
+                                RC_REQUEST_PERMISSION,
+                                null,
+                                0,
+                                0,
+                                0,
+                                null
+                            )
+                        } catch (ex: IntentSender.SendIntentException) {
+                            Timber.e(ex, "Error requesting consent")
+                        }
+                    }
+                    is NotificationsStatusViewModel.NotificationsStatusResult.UnknownError -> Timber.e(
+                        it.exception,
+                        "Unexpected error has occurred"
+                    )
+                }
+            }
+        )
+
+        viewModel.shareTekResult.observe(
+            viewLifecycleOwner,
+            EventObserver {
+                when (it) {
+                    is NotificationsStatusViewModel.ShareTekResult.Success -> {
+                        binding.tekQrCode.setImageBitmap(
+                            it.qrCode
+                        )
+                        binding.tekBase64.text = it.keyBase64
+                    }
+                    is NotificationsStatusViewModel.ShareTekResult.RequestConsent -> {
+                        startIntentSenderForResult(
+                            it.resolution.intentSender,
+                            RC_REQUEST_SHARE_KEYS,
                             null,
                             0,
                             0,
                             0,
                             null
                         )
-                    } catch (ex: IntentSender.SendIntentException) {
-                        Timber.e(ex, "Error requesting consent")
                     }
-                }
-                is NotificationsStatusViewModel.NotificationsStatusResult.UnknownError -> Timber.e(
-                    it.exception,
-                    "Unexpected error has occurred"
-                )
-            }
-        })
+                    NotificationsStatusViewModel.ShareTekResult.Error ->
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.share_tek_generic_error,
+                            Toast.LENGTH_LONG
+                        ).show()
 
-        viewModel.shareTekResult.observe(viewLifecycleOwner, EventObserver {
-            when (it) {
-                is NotificationsStatusViewModel.ShareTekResult.Success -> {
-                    binding.tekQrCode.setImageBitmap(
-                        it.qrCode
-                    )
-                    binding.tekBase64.text = it.keyBase64
-                }
-                is NotificationsStatusViewModel.ShareTekResult.RequestConsent -> {
-                    startIntentSenderForResult(
-                        it.resolution.intentSender,
-                        RC_REQUEST_SHARE_KEYS,
-                        null,
-                        0,
-                        0,
-                        0,
-                        null
-                    )
-                }
-                NotificationsStatusViewModel.ShareTekResult.Error ->
-                    Toast.makeText(
+                    NotificationsStatusViewModel.ShareTekResult.NoKeys -> Toast.makeText(
                         requireContext(),
-                        R.string.share_tek_generic_error,
+                        R.string.share_tek_no_key_error,
                         Toast.LENGTH_LONG
                     ).show()
-
-                NotificationsStatusViewModel.ShareTekResult.NoKeys -> Toast.makeText(
-                    requireContext(),
-                    R.string.share_tek_no_key_error,
-                    Toast.LENGTH_LONG
-                ).show()
+                }
             }
-        })
+        )
 
         viewModel.testId.observe(viewLifecycleOwner) {
             viewModel.updateQrCode(resources.getDimensionPixelSize(R.dimen.qr_code))

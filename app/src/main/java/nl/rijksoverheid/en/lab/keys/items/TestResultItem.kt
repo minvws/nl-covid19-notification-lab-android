@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 De Staat der Nederlanden, Ministerie van Volksgezondheid, Welzijn en Sport.
+ *  Licensed under the EUROPEAN UNION PUBLIC LICENCE v. 1.2
+ *
+ *  SPDX-License-Identifier: EUPL-1.2
+ */
 package nl.rijksoverheid.en.lab.keys.items
 
 import android.annotation.SuppressLint
@@ -17,7 +23,8 @@ class TestResultItem(private val testResult: TestResult) : BindableItem<ItemTest
         val formattedDate = SimpleDateFormat(
             DateFormat.getBestDateTimePattern(
                 Locale.getDefault(), "dd-MM-yyyy HH:mm"
-            ), Locale.getDefault()
+            ),
+            Locale.getDefault()
         ).format(testResult.timestamp)
         viewBinding.title.text = "${testResult.testId} - ${testResult.scannedDeviceId}"
         viewBinding.dateTime.text = formattedDate

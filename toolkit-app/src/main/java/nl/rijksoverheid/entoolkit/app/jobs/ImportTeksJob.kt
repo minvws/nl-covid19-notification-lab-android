@@ -37,7 +37,8 @@ class ImportTeksJob(context: Context, params: WorkerParameters) : CoroutineWorke
                 tek.data.toByteString().hex(),
                 tek.interval.toInt(),
                 deviceName
-            ), rpis
+            ),
+            rpis
         )
         return Result.success()
     }

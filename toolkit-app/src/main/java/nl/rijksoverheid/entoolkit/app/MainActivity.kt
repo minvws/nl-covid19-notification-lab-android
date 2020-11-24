@@ -95,26 +95,28 @@ class MainActivity : AppCompatActivity() {
 
         binder.scanResults.switchMap {
             liveData {
-                emit(it.map {
-                    val tek = rpiCache[it.rpiHex] ?: dao.getTekForRpi(it.rpiHex)
-                    if (tek != null) {
-                        rpiCache[it.rpiHex] = tek
-                        val aemKey = Crypto.createAssociatedMetadataKey(
-                            Crypto.TemporaryExposureKey(
-                                tek.tekHex.decodeHex().toByteArray(),
-                                tek.rollingPeriodStart.toLong()
+                emit(
+                    it.map {
+                        val tek = rpiCache[it.rpiHex] ?: dao.getTekForRpi(it.rpiHex)
+                        if (tek != null) {
+                            rpiCache[it.rpiHex] = tek
+                            val aemKey = Crypto.createAssociatedMetadataKey(
+                                Crypto.TemporaryExposureKey(
+                                    tek.tekHex.decodeHex().toByteArray(),
+                                    tek.rollingPeriodStart.toLong()
+                                )
                             )
-                        )
-                        val metadata = Crypto.decryptAssociatedMetadata(
-                            it.aem,
-                            it.rpiHex.decodeHex().toByteArray(),
-                            aemKey
-                        )
-                        it.copy(deviceName = tek.deviceName, tx = metadata[1].toInt())
-                    } else {
-                        it
+                            val metadata = Crypto.decryptAssociatedMetadata(
+                                it.aem,
+                                it.rpiHex.decodeHex().toByteArray(),
+                                aemKey
+                            )
+                            it.copy(deviceName = tek.deviceName, tx = metadata[1].toInt())
+                        } else {
+                            it
+                        }
                     }
-                })
+                )
             }
         }.observe(this) { scanResults ->
             // Timber.d("Scanresults: $scanResults")

@@ -31,7 +31,8 @@ private val TEK = Crypto.TemporaryExposureKey(
         0xb9.toByte(),
         0x31,
         0x25
-    ), 2642976
+    ),
+    2642976
 )
 
 private val RPI_KEY = byteArrayOf(
@@ -79,7 +80,8 @@ class CryptoTest {
                 0x89.toByte(), 0x16, 0x04, 0xbf.toByte(), 0xbe.toByte(), 0x49,
                 0xdf.toByte(), 0x84.toByte(), 0x50,
                 0x96.toByte()
-            ), rpi
+            ),
+            rpi
         )
     }
 

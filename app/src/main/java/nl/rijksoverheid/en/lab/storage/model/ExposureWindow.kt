@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 De Staat der Nederlanden, Ministerie van Volksgezondheid, Welzijn en Sport.
+ *  Licensed under the EUROPEAN UNION PUBLIC LICENCE v. 1.2
+ *
+ *  SPDX-License-Identifier: EUPL-1.2
+ */
 package nl.rijksoverheid.en.lab.storage.model
 
 import androidx.room.ColumnInfo
@@ -9,12 +15,14 @@ import com.google.android.gms.nearby.exposurenotification.ExposureWindow
 import java.util.UUID
 
 @Entity(
-    foreignKeys = [ForeignKey(
-        entity = TestResult::class,
-        parentColumns = arrayOf("id"),
-        childColumns = arrayOf("testId"),
-        onDelete = ForeignKey.CASCADE
-    )]
+    foreignKeys = [
+        ForeignKey(
+            entity = TestResult::class,
+            parentColumns = arrayOf("id"),
+            childColumns = arrayOf("testId"),
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
 
 data class ExposureWindow @JvmOverloads constructor(
