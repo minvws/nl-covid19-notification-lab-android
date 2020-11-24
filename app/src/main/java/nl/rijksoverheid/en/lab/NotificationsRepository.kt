@@ -76,10 +76,13 @@ class NotificationsRepository(
         db.getTestResultDao().removeTestResults()
     }
 
-    suspend fun exportResults(): File {
+    suspend fun exportResults(deviceName: String): File {
         val exportsDirectory = File(context.filesDir, "exports")
         exportsDirectory.mkdirs()
-        val export = File(exportsDirectory, "export.csv")
+        val export = File(
+            exportsDirectory,
+            "labapp_export_${deviceName.replace("/", "_").replace(" ", "_")}.csv"
+        )
         val results = getTestResults().take(1).toList().flatten()
         withContext(Dispatchers.IO) {
             val exporter = ResultsExporter()

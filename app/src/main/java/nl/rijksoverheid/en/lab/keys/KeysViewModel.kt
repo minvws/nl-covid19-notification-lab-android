@@ -20,7 +20,10 @@ import nl.rijksoverheid.en.lab.exposurenotification.StatusResult
 import nl.rijksoverheid.en.lab.lifecyle.Event
 import java.io.File
 
-class KeysViewModel(private val repository: NotificationsRepository, val deviceName: String) :
+class KeysViewModel(
+    private val repository: NotificationsRepository,
+    private val deviceName: String
+) :
     ViewModel() {
 
     val lastResults = repository.getTestResults().asLiveData(viewModelScope.coroutineContext)
@@ -40,7 +43,7 @@ class KeysViewModel(private val repository: NotificationsRepository, val deviceN
 
     fun exportResults() {
         viewModelScope.launch {
-            val file = repository.exportResults()
+            val file = repository.exportResults(deviceName)
             (exportFile as MutableLiveData).value = Event(file)
         }
     }
