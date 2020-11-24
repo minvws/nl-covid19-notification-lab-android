@@ -71,7 +71,7 @@ class ResultsExporter {
 
     private fun writeExposureWindowFields(window: ExposureWindow, appender: CsvAppender) {
         appender.appendField(window.id)
-        appender.appendField(window.timestamp.toString())
+        appender.appendField((window.timestamp / 1000L).toString())
         appender.appendField(window.calibrationConfidence.toString())
     }
 
@@ -81,6 +81,6 @@ class ResultsExporter {
         appender.appendField(result.device)
         appender.appendField(result.scannedDeviceId)
         appender.appendField(result.scannedTek)
-        appender.appendField(result.timestamp.toString())
+        appender.appendField((result.timestamp / 1000L).toString())
     }
 }
