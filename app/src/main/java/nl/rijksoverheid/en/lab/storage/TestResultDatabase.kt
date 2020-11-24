@@ -10,7 +10,7 @@ import nl.rijksoverheid.en.lab.storage.model.TestResult
 
 @Database(
     entities = [ExposureWindow::class, ExposureScanInstance::class, TestResult::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TestResultDatabase : RoomDatabase() {

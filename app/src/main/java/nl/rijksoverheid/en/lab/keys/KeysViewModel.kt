@@ -31,7 +31,7 @@ class KeysViewModel(private val repository: NotificationsRepository, val deviceN
         liveData { emit(repository.getStatus() == StatusResult.Enabled) }
 
     fun importKey(tek: TemporaryExposureKey, sourceDeviceId: String, testId: String) {
-        repository.setSourceAndTestId(sourceDeviceId, testId)
+        repository.setSourceAndTestId(deviceName, sourceDeviceId, testId)
         viewModelScope.launch {
             (importResult as MutableLiveData).value =
                 Event(repository.importTemporaryExposureKey(tek))

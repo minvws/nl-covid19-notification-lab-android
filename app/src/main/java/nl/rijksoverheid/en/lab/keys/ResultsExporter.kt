@@ -15,6 +15,7 @@ class ResultsExporter {
             appender.appendLine(
                 "Id",
                 "Test",
+                "Scanning device",
                 "Scanned device",
                 "Scanned TEK",
                 "Timestamp",
@@ -71,6 +72,7 @@ class ResultsExporter {
     private fun writeTestResultFields(result: TestResult, appender: CsvAppender) {
         appender.appendField(result.id)
         appender.appendField(result.testId)
+        appender.appendField(result.device)
         appender.appendField(result.scannedDeviceId)
         appender.appendField(result.scannedTek)
         appender.appendField(result.timestamp.toString())

@@ -14,9 +14,6 @@ import com.google.android.gms.nearby.exposurenotification.DiagnosisKeyFileProvid
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
 import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -46,13 +43,10 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.UUID
 
-private val EQUAL_WEIGHTS = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1)
-private val SEQUENTIAL_WEIGHTS = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8)
+private const val KEY_DEVICE_ID = "device_id"
 private const val KEY_SOURCE_DEVICE = "source_device"
 private const val KEY_TEST_ID = "test_id"
 private const val KEY_SCANNED_TEK = "scanned_tek"
-private const val ATTN_THRESHOLD_LOW = 42
-private const val ATTN_THRESHOLD_HIGH = 56
 
 class NotificationsRepository(
     private val context: Context,
@@ -63,14 +57,6 @@ class NotificationsRepository(
     companion object {
         const val DEFAULT_ROLLING_PERIOD = 144
     }
-
-    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-    private val exposuresAdapter = moshi.adapter<List<ExposureInfo>>(
-        Types.newParameterizedType(
-            List::class.java,
-            ExposureInfo::class.java
-        )
-    )
 
     private val measurements = context.getSharedPreferences("measurements", 0)
 
@@ -106,6 +92,7 @@ class NotificationsRepository(
         val results = exposureNotificationClient.retrieveExposureWindows()
         val testResult = TestResult(
             UUID.randomUUID().toString(),
+            measurements.getString(KEY_DEVICE_ID, null)!!,
             measurements.getString(KEY_SCANNED_TEK, null)!!,
             measurements.getString(
                 KEY_SOURCE_DEVICE, null
@@ -191,10 +178,11 @@ class NotificationsRepository(
         }
     }
 
-    fun setSourceAndTestId(sourceDeviceId: String, testId: String) {
+    fun setSourceAndTestId(deviceId: String, sourceDeviceId: String, testId: String) {
         measurements.edit {
             putString(KEY_SOURCE_DEVICE, sourceDeviceId)
             putString(KEY_TEST_ID, testId)
+            putString(KEY_DEVICE_ID, deviceId)
         }
     }
 
@@ -230,13 +218,6 @@ class NotificationsRepository(
             return result
         }
     }
-
-    data class TestResults(
-        val scannedTek: String,
-        val sourceDeviceId: String,
-        val testId: String,
-        val exposures: List<ExposureInfo>
-    )
 }
 
 sealed class ExportTemporaryExposureKeysResult {

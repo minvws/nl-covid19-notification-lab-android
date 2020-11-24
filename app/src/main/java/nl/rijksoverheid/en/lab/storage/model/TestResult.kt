@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 @Entity
 data class TestResult @JvmOverloads constructor(
     @PrimaryKey val id: String,
+    val device: String,
     val scannedTek: String,
     val scannedDeviceId: String,
     val testId: String,
