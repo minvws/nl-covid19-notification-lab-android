@@ -12,15 +12,20 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.edit
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.savedstate.SavedStateRegistryOwner
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.exposurenotification.ExposureNotificationClient
 import nl.rijksoverheid.en.lab.keys.KeysViewModel
 import nl.rijksoverheid.en.lab.status.NotificationsStatusViewModel
 import nl.rijksoverheid.en.lab.storage.TestResultDatabase
 
-class LabViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class LabViewModelFactory(
+    private val context: Context,
+    savedStateRegistryOwner: SavedStateRegistryOwner
+) : AbstractSavedStateViewModelFactory(savedStateRegistryOwner, null) {
     private val repository: NotificationsRepository by lazy {
         NotificationsRepository(
             context,
@@ -30,11 +35,16 @@ class LabViewModelFactory(private val context: Context) : ViewModelProvider.Fact
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel?> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle
+    ): T {
         return when (modelClass) {
             NotificationsStatusViewModel::class.java -> NotificationsStatusViewModel(
                 repository,
-                getDevicePreferences(context)
+                getDevicePreferences(context),
+                handle
             ) as T
             KeysViewModel::class.java -> KeysViewModel(
                 repository,

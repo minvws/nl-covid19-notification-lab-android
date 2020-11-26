@@ -50,6 +50,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun getDefaultViewModelProviderFactory(): ViewModelProvider.Factory {
-        return LabViewModelFactory(applicationContext)
+        return LabViewModelFactory(applicationContext, this)
     }
 }

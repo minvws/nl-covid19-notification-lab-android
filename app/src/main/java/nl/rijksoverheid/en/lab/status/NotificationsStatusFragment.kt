@@ -144,12 +144,11 @@ class NotificationsStatusFragment : BaseFragment(R.layout.fragment_status) {
         binding.testId.setText(viewModel.testId.value)
 
         binding.testId.addTextChangedListener {
-            viewModel.testId.value = it.toString().trim()
+            viewModel.updateTestId(it.toString().trim())
         }
 
         binding.deviceName.addTextChangedListener {
-            viewModel.deviceName.value = it.toString().trim()
-            viewModel.storeDeviceId()
+            viewModel.storeDeviceId(it.toString().trim())
         }
 
         binding.testId.setOnEditorActionListener { _, actionId, _ ->

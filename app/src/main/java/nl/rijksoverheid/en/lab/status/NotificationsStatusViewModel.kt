@@ -14,6 +14,7 @@ import android.util.Base64
 import androidx.core.content.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.nearby.exposurenotification.TemporaryExposureKey
@@ -32,15 +33,16 @@ import timber.log.Timber
 
 class NotificationsStatusViewModel(
     private val repository: NotificationsRepository,
-    private val preferences: SharedPreferences
+    private val preferences: SharedPreferences,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val notificationState: LiveData<NotificationsState> = MutableLiveData()
     val notificationsResult: LiveData<Event<NotificationsStatusResult>> = MutableLiveData()
     val shareTekResult: LiveData<Event<ShareTekResult>> = MutableLiveData()
 
-    val testId = MutableLiveData("")
-    val deviceName = MutableLiveData(preferences.getString("device_name", "")!!)
+    val testId: LiveData<String> = MutableLiveData(savedStateHandle["testId"] ?: "")
+    val deviceName: LiveData<String> = MutableLiveData(preferences.getString("device_name", "")!!)
     private var currentKeys: List<TemporaryExposureKey> = emptyList()
 
     init {
@@ -192,10 +194,16 @@ class NotificationsStatusViewModel(
         return bitmap
     }
 
-    fun storeDeviceId() {
+    fun storeDeviceId(deviceId: String) {
+        (this.deviceName as MutableLiveData).value = deviceId
         preferences.edit {
             putString("device_name", deviceName.value!!)
         }
+    }
+
+    fun updateTestId(testId: String) {
+        (this.testId as MutableLiveData).value = testId
+        savedStateHandle["testId"] = testId
     }
 
     fun updateQrCode(size: Int) {
