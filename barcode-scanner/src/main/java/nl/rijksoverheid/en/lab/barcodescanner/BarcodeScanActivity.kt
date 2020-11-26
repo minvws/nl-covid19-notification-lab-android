@@ -9,65 +9,64 @@ package nl.rijksoverheid.en.lab.barcodescanner
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.TextureView
-import android.view.ViewGroup
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraX
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageAnalysisConfig
 import androidx.camera.core.Preview
-import androidx.camera.core.PreviewConfig
-import androidx.core.app.ActivityCompat
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
+import com.google.common.util.concurrent.ListenableFuture
 import timber.log.Timber
+import java.util.concurrent.Executors
 
 class BarcodeScanActivity : AppCompatActivity() {
     companion object {
-        const val REQUEST_CODE_SCAN = 901
         const val RESULT_KEY_SCANNED_QR_CODE = "RESULT_KEY_SCANNED_QR_CODE"
-        private const val REQUEST_CAMERA_PERMISSION = 10
     }
 
-    private lateinit var textureView: TextureView
+    private lateinit var previewView: PreviewView
+    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                startCameraNew()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scan_barcode)
 
-        textureView = findViewById(R.id.texture_view)
-
-        // Request camera permissions
-        if (isCameraPermissionGranted()) {
-            textureView.post { startCamera() }
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                REQUEST_CAMERA_PERMISSION
-            )
-        }
+        previewView = findViewById(R.id.preview)
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        requestPermissions.launch(Manifest.permission.CAMERA)
     }
 
-    private fun startCamera() {
-        val previewConfig = PreviewConfig.Builder()
-            .setLensFacing(CameraX.LensFacing.BACK)
+    private fun startCameraNew() {
+        cameraProviderFuture.addListener(
+            {
+                val cameraProvider = cameraProviderFuture.get()
+                startCamera(cameraProvider)
+            },
+            ContextCompat.getMainExecutor(this)
+        )
+    }
+
+    private fun startCamera(provider: ProcessCameraProvider) {
+        val executor = Executors.newSingleThreadExecutor()
+        val preview = Preview.Builder().build()
+        val cameraSelector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
 
-        val preview = Preview(previewConfig)
-        preview.setOnPreviewOutputUpdateListener { previewOutput ->
-            val parent = textureView.parent as ViewGroup
-            parent.removeView(textureView)
-            textureView.setSurfaceTexture(previewOutput.surfaceTexture)
-            parent.addView(textureView, 0)
-        }
+        preview.setSurfaceProvider(previewView.surfaceProvider)
 
-        val imageAnalysisConfig = ImageAnalysisConfig.Builder()
-            .build()
-        val imageAnalysis = ImageAnalysis(imageAnalysisConfig)
+        val imageAnalysis =
+            ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
 
         val qrCodeAnalyzer = BarcodeAnalyzer { qrCodes ->
             qrCodes.forEach {
@@ -79,29 +78,7 @@ class BarcodeScanActivity : AppCompatActivity() {
             }
         }
 
-        imageAnalysis.analyzer = qrCodeAnalyzer
-
-        CameraX.bindToLifecycle(this as LifecycleOwner, preview, imageAnalysis)
-    }
-
-    private fun isCameraPermissionGranted(): Boolean {
-        val selfPermission =
-            ContextCompat.checkSelfPermission(baseContext, Manifest.permission.CAMERA)
-        return selfPermission == PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (isCameraPermissionGranted()) {
-                textureView.post { startCamera() }
-            } else {
-                Toast.makeText(this, "Camera permission is required.", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        }
+        imageAnalysis.setAnalyzer(executor, qrCodeAnalyzer)
+        provider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview)
     }
 }

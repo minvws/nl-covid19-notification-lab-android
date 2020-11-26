@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".BarcodeScanActivity">
 
-    <TextureView
-        android:id="@+id/texture_view"
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"

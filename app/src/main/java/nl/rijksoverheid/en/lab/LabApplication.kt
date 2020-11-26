@@ -7,8 +7,6 @@
 package nl.rijksoverheid.en.lab
 
 import android.app.Application
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import timber.log.Timber
 
 class LabApplication : Application() {
@@ -17,6 +15,5 @@ class LabApplication : Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-        FirebaseApp.initializeApp(this, FirebaseOptions.Builder().setApplicationId("dummy").build())
     }
 }
